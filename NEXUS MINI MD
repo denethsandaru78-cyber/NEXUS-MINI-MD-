@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEXUS MD — WhatsApp Bot Pairing & Dashboard</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg-dark: #040814;
+      --card-bg: rgba(8, 20, 44, 0.65);
+      --card-border: rgba(45, 140, 255, 0.3);
+      --neon-blue: #00d2ff;
+      --neon-glow: #0088ff;
+      --neon-white: #ffffff;
+      --accent-cyan: #00f0ff;
+      --text-dim: #8ab4f8;
+      --status-green: #00ff88;
+      --danger-red: #ff3b3b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #e0f2fe;
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Anime Blue Aesthetic Background & Particles */
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 50% 20%, rgba(0, 136, 255, 0.15), transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(0, 210, 255, 0.1), transparent 50%),
+        url('https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
+      filter: brightness(0.45) contrast(1.1) hue-rotate(190deg);
+      z-index: -2;
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 210, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 210, 255, 0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Container Layout */
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Header & Glowing Title */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .nexus-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: var(--neon-white);
+      text-shadow: 
+        0 0 10px var(--neon-white),
+        0 0 20px var(--neon-blue),
+        0 0 40px var(--neon-glow),
+        0 0 80px var(--neon-glow);
+      animation: pulseGlow 3s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { text-shadow: 0 0 10px #fff, 0 0 20px var(--neon-blue), 0 0 40px var(--neon-glow); }
+      100% { text-shadow: 0 0 15px #fff, 0 0 30px var(--neon-blue), 0 0 60px var(--neon-glow), 0 0 100px var(--accent-cyan); }
+    }
+
+    .subtitle {
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--neon-blue);
+      letter-spacing: 2px;
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    /* Music Player Bar */
+    .music-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 50px;
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 500px;
+      margin: 0 auto 3rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .music-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .music-disc {
+      color: var(--neon-blue);
+      animation: spin 4s linear infinite;
+    }
+
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .btn-play {
+      background: linear-gradient(135deg, var(--neon-blue), #0055ff);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.3s;
+      box-shadow: 0 0 12px var(--neon-glow);
+    }
+
+    .btn-play:hover { transform: scale(1.1); }
+
+    /* Glass Panels */
+    .grid-dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      padding: 1.8rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    }
+
+    .card-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.25rem;
+      color: var(--neon-white);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title i { color: var(--neon-blue); }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.4rem;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .phone-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    select, input[type="text"], input[type="tel"] {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(4, 12, 30, 0.8);
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      border-radius: 8px;
+      color: white;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.3);
+    }
+
+    .select-cc { width: 45%; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1rem;
+      background: linear-gradient(135deg, #00d2ff 0%, #0055ff 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(0, 210, 255, 0.7);
+    }
+
+    /* Pair Code Display Box */
+    .code-box {
+      margin-top: 1.5rem;
+      background: rgba(2, 8, 20, 0.9);
+      border: 1px dashed var(--neon-blue);
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+      display: none;
+    }
+
+    .code-box.active { display: block; animation: fadeIn 0.4s ease-in; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10deg); } to { opacity: 1; transform: translateY(0); } }
+
+    .pair-code {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--neon-blue);
+      letter-spacing: 3px;
+      margin: 0.5rem 0;
+      text-shadow: 0 0 8px var(--neon-blue);
+    }
+
+    .btn-copy {
+      background: transparent;
+      border: 1px solid var(--neon-blue);
+      color: var(--neon-blue);
+      padding: 0.4rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Share Tech Mono', monospace;
+      margin-top: 0.5rem;
+      transition: 0.3s;
+    }
+
+    .btn-copy:hover {
+      background: var(--neon-blue);
+      color: black;
+    }
+
+    /* Server Switcher Buttons */
+    .server-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.2rem;
+    }
+
+    .btn-server {
+      background: rgba(4, 12, 30, 0.8);
+      border: 1px solid rgba(0, 210, 255, 0.2);
+      color: white;
+      padding: 0.7rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.3s;
+    }
+
+    .btn-server.active {
+      border-color: var(--neon-blue);
+      background: rgba(0, 210, 255, 0.15);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.2);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-green);
+      box-shadow: 0 0 8px var(--status-green);
+    }
+
+    /* Metrics & Toggles */
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .metric-row:last-child { border: none; }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .4s;
+      border-radius: 34px;
+      border: 1px solid rgba(0, 210, 255, 0.3);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: var(--neon-blue); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-overlay"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="app-container">
+
+    <!-- Header Section -->
+    <header>
+      <h1 class="nexus-title">NEXUS MD</h1>
+      <div class="subtitle">Next-Gen WhatsApp Multi-Device pairing Engine</div>
+    </header>
+
+    <!-- Music Player Controls -->
+    <div class="music-bar">
+      <div class="music-info">
+        <i class="fa-solid fa-compact-disc music-disc"></i>
+        <span>Track: <strong>Kalyani OST</strong></span>
+      </div>
+      <button class="btn-play" id="audioToggleBtn" onclick="toggleAudio()">
+        <i class="fa-solid fa-play" id="playIcon"></i>
+      </button>
+      <audio id="bgAudio" loop src="Kalyani.mp3"></audio>
+    </div>
+
+    <!-- Main Grid Dashboard -->
+    <div class="grid-dashboard">
+
+      <!-- Panel 1: Pairing Generator -->
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-key"></i> Link WhatsApp Account
+        </div>
+
+        <div class="form-group">
+          <label class="label">Select Server Node</label>
+          <div class="server-grid">
+            <button class="btn-server active" onclick="setServer(1, this)">
+              <span class="dot"></span> Server 01 (Primary)
+            </button>
+            <button class="btn-server" onclick="setServer(2, this)">
+              <span class="dot"></span> Server 02 (Backup)
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="label">WhatsApp Number</label>
+          <div class="phone-input-group">
+            <select class="select-cc" id="countryCode">
+              <option value="+94" selected>🇱🇰 +94 (SL)</option>
+              <option value="+91">🇮🇳 +91 (IN)</option>
+              <option value="+1">🇺🇸 +1 (US)</option>
+              <option value="+44">🇬🇧 +44 (UK)</option>
+              <option value="+62">🇮🇩 +62 (ID)</option>
+              <option value="+55">🇧🇷 +55 (BR)</option>
+            </select>
+            <input type="tel" id="phoneNumber" placeholder="7X XXX XXXX" />
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="generatePairCode()">
+          <i class="fa-solid fa-bolt"></i> GET PAIRING CODE
+        </button>
+
+        <div class="code-box" id="codeDisplay">
+          <div style="font-size: 0.8rem; color: #8ab4f8;">YOUR PAIRING CODE IS READY</div>
+          <div class="pair-code" id="pairCodeVal">NEX-US1-0000</div>
+          <button class="btn-copy" onclick="copyCode()">
+            <i class="fa-regular fa-copy"></i> Copy Code
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel 2: System Status & Metrics -->
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-chart-line"></i> Web & Bot Monitor
+        </div>
+
+        <div class="metric-row">
+          <span>Web Connectivity:</span>
+          <span style="color: var(--status-green); font-weight: bold;"><i class="fa-solid fa-wifi"></i> ONLINE</span>
+        </div>
+        <div class="metric-row">
+          <span>Active Server Node:</span>
+          <span id="activeNode">Server 01 (Colombo)</span>
+        </div>
+        <div class="metric-row">
+          <span>Response Latency:</span>
+          <span id="pingVal" style="color: var(--neon-blue);">24ms</span>
+        </div>
+        <div class="metric-row">
+          <span>System Uptime:</span>
+          <span id="uptimeVal">99.98%</span>
+        </div>
+        <div class="metric-row">
+          <span>Session Protocol:</span>
+          <span>Multi-Device (Baileys)</span>
+        </div>
+      </div>
+
+      <!-- Panel 3: Quick Bot Settings -->
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-sliders"></i> Bot Preferences
+        </div>
+
+        <div class="toggle-row">
+          <span>Auto Read Messages</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span>Auto Status View</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span>Public Mode</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span>Anti-Delete Protection</span>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span>Admin Shield</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      POWERED BY NEXUS ENGINE &bull; ALL RIGHTS RESERVED &copy; 2026
+    </footer>
+
+  </div>
+
+  <script>
+    // Audio Player Toggle
+    const audio = document.getElementById('bgAudio');
+    const playIcon = document.getElementById('playIcon');
+
+    function toggleAudio() {
+      if (audio.paused) {
+        audio.play().catch(e => alert("Please interact with page to enable audio."));
+        playIcon.className = "fa-solid fa-pause";
+      } else {
+        audio.pause();
+        playIcon.className = "fa-solid fa-play";
+      }
+    }
+
+    // Server Switcher
+    function setServer(id, element) {
+      document.querySelectorAll('.btn-server').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      document.getElementById('activeNode').innerText = id === 1 ? 'Server 01 (Colombo)' : 'Server 02 (Singapore)';
+    }
+
+    // Pair Code Generator (NEX-US1 Format)
+    function generatePairCode() {
+      const cc = document.getElementById('countryCode').value;
+      const num = document.getElementById('phoneNumber').value.trim();
+
+      if (!num) {
+        alert("Please enter a valid phone number!");
+        return;
+      }
+
+      // Generate random 4-character string for NEX-US1 suffix
+      const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const generatedCode = `NEX-US1-${randomStr}`;
+
+      document.getElementById('pairCodeVal').innerText = generatedCode;
+      document.getElementById('codeDisplay').classList.add('active');
+    }
+
+    // Copy Code Function
+    function copyCode() {
+      const code = document.getElementById('pairCodeVal').innerText;
+      navigator.clipboard.writeText(code);
+      alert("Pairing code copied: " + code);
+    }
+
+    // Simulate Dynamic Latency Updates
+    setInterval(() => {
+      const ping = Math.floor(Math.random() * 15) + 18;
+      document.getElementById('pingVal').innerText = ping + "ms";
+    }, 3000);
+  </script>
+</body>
+</html>
